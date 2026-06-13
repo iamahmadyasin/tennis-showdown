@@ -34,7 +34,7 @@ MAX_BALL_SPEED = 8
 
 WINNING_SCORE = 5
 
-# Typography
+# Typography / UI
 
 GAME_TITLE = "Tennis Showdown"
 TITLE_FONT = "Magneto"
@@ -43,16 +43,22 @@ FRAME_DELAY = 1 / 60
 
 # Game-state constants
 
-STATE_TITLE = "TITLE"
+STATE_TITLE        = "TITLE"
 STATE_COLOR_CHOICE = "COLOR_CHOICE"
-STATE_DIFFICULTY = "DIFFICULTY"
-STATE_PLAYING = "PLAYING"
-STATE_GAME_OVER = "GAME_OVER"
+STATE_DIFFICULTY   = "DIFFICULTY"
+STATE_PLAYING      = "PLAYING"
+STATE_GAME_OVER    = "GAME_OVER"
 
-STATE_USER_SCORED = "USER_SCORED"
-STATE_COMP_SCORED = "COMP_SCORED"
+STATE_USER_SCORED  = "USER_SCORED"
+STATE_COMP_SCORED  = "COMP_SCORED"
 
 GAME_OVER_TEXT_COLOR = "#111111"
+
+
+# Helper
+
+def _keysym(key):
+    return key.keysym if hasattr(key, "keysym") else key
 
 # Screen helpers
 
@@ -61,11 +67,11 @@ def show_titlecard(canvas):
     objs.append(canvas.create_rectangle(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT, "#C0FFEE"))
     objs.append(canvas.create_text(
         CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 15,
-        GAME_TITLE, TITLE_FONT, 30, "#2E2E2E", anchor="center"
+        GAME_TITLE, "center", (TITLE_FONT, 30), "#2E2E2E"
     ))
     objs.append(canvas.create_text(
         CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 60,
-        "Press Enter to start", "Lucida Console", 20, "#2E2E2E", anchor="center"
+        "Press Enter to start", "center", ("Lucida Console", 20), "#2E2E2E"
     ))
 
     # Tennis icon
@@ -77,15 +83,16 @@ def show_titlecard(canvas):
         icon_left_x, icon_top_y, icon_w, int(icon_h), "tennis icon.png"
     ))
 
-    # Wait for input
     result = False
     waiting = True
     while waiting:
+        canvas.update()
         for key in canvas.get_new_key_presses():
-            if key == "Enter":
+            k = _keysym(key)
+            if k == "Return":
                 result = True
                 waiting = False
-            elif key == "Escape":
+            elif k == "Escape":
                 waiting = False
         time.sleep(FRAME_DELAY)
 
@@ -109,33 +116,35 @@ def choose_bg_color(canvas):
     header_y = CANVAS_HEIGHT * 0.25
     objs.append(canvas.create_text(
         CANVAS_WIDTH / 2, header_y,
-        "Choose Table Color", FONT, 26, "white", anchor="center"
+        "Choose Table Color", "center", (FONT, 26), "white"
     ))
 
     current_y = header_y + 26 + 30
     for key, option in color_options.items():
         objs.append(canvas.create_text(
             CANVAS_WIDTH / 2, current_y,
-            f"{key}. {option['name']}", FONT, 20, option["value"], anchor="center"
+            f"{key}. {option['name']}", "center", (FONT, 20), option["value"]
         ))
         current_y += 30
 
     error_obj = None
     while True:
+        canvas.update()
         for key in canvas.get_new_key_presses():
-            if key in color_options:
+            k = _keysym(key)
+            if k in color_options:
                 if error_obj:
                     canvas.delete(error_obj)
                 for obj in objs:
                     canvas.delete(obj)
-                return color_options[key]["value"]
+                return color_options[k]["value"]
             else:
                 if error_obj:
                     canvas.delete(error_obj)
                 error_obj = canvas.create_text(
                     CANVAS_WIDTH / 2, 320,
                     "Invalid choice. Press a key between 1 and 5.",
-                    "Lucida Console", 12, "#FF0000", anchor="center"
+                    "center", ("Lucida Console", 12), "#FF0000"
                 )
         time.sleep(FRAME_DELAY)
 
@@ -147,7 +156,7 @@ def choose_difficulty(canvas):
     header_y = CANVAS_HEIGHT * 0.25
     objs.append(canvas.create_text(
         CANVAS_WIDTH / 2, header_y,
-        "Choose Difficulty", FONT, 26, "white", anchor="center"
+        "Choose Difficulty", "center", (FONT, 26), "white"
     ))
 
     difficulty_colors = {"1": "#77DD77", "2": "#FFD700", "3": "#FF6B6B"}
@@ -155,51 +164,51 @@ def choose_difficulty(canvas):
     for key, setting in DIFFICULTY_SETTINGS.items():
         objs.append(canvas.create_text(
             CANVAS_WIDTH / 2, current_y,
-            f"{key}. {setting['name']}", FONT, 20,
-            difficulty_colors[key], anchor="center"
+            f"{key}. {setting['name']}", "center", (FONT, 20), difficulty_colors[key]
         ))
         current_y += 30
 
     error_obj = None
     while True:
+        canvas.update()
         for key in canvas.get_new_key_presses():
-            if key in DIFFICULTY_SETTINGS:
+            k = _keysym(key)
+            if k in DIFFICULTY_SETTINGS:
                 if error_obj:
                     canvas.delete(error_obj)
                 for obj in objs:
                     canvas.delete(obj)
-                return DIFFICULTY_SETTINGS[key]["comp_speed"]
+                return DIFFICULTY_SETTINGS[k]["comp_speed"]
             else:
                 if error_obj:
                     canvas.delete(error_obj)
                 error_obj = canvas.create_text(
                     CANVAS_WIDTH / 2, 320,
                     "Invalid choice. Press a key between 1 and 3.",
-                    "Lucida Console", 12, "#FF0000", anchor="center"
+                    "center", ("Lucida Console", 12), "#FF0000"
                 )
         time.sleep(FRAME_DELAY)
 
 
 def show_gameover(canvas, winner_text, user_score, comp_score):
-
     canvas.clear()
     objs = []
 
-    bg_color = "#0A7FF6" if winner_text == "You Win! 🎉" else "#97C90F"
+    bg_color = "#0A7FF6" if winner_text == "You Win! :)" else "#97C90F"
     objs.append(canvas.create_rectangle(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT, bg_color))
 
     objs.append(canvas.create_text(
         CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 110,
-        winner_text, FONT, 30, GAME_OVER_TEXT_COLOR, anchor="center"
+        winner_text, "center", (FONT, 30), GAME_OVER_TEXT_COLOR
     ))
 
-    score_str = f"Final Score:  You {user_score} – {comp_score} Computer"
+    score_str = f"Final Score:  You {user_score} - {comp_score} Computer"
     objs.append(canvas.create_text(
         CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 75,
-        score_str, FONT, 13, GAME_OVER_TEXT_COLOR, anchor="center"
+        score_str, "center", (FONT, 13), GAME_OVER_TEXT_COLOR
     ))
 
-    if winner_text == "You Win! 🎉":
+    if winner_text == "You Win! :)":
         img_file = "trophy.png"
         img_w = img_h = 150
     else:
@@ -216,7 +225,7 @@ def show_gameover(canvas, winner_text, user_score, comp_score):
     objs.append(canvas.create_text(
         CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 110,
         "Press Enter to Restart  or  Esc to Quit",
-        FONT, 13, GAME_OVER_TEXT_COLOR, anchor="center"
+        "center", (FONT, 13), GAME_OVER_TEXT_COLOR
     ))
 
     return objs
@@ -224,26 +233,22 @@ def show_gameover(canvas, winner_text, user_score, comp_score):
 # Game-object creators
 
 def create_comp_paddle(canvas):
-    """Create and return the computer's paddle (top, red)."""
     left_x = (CANVAS_WIDTH / 2) - (PADDLE_LENGTH / 2)
     top_y = PADDLE_EDGE_DIST
     return canvas.create_rectangle(
         left_x, top_y,
         left_x + PADDLE_LENGTH, top_y + PADDLE_THICKNESS,
-        COMP_PADDLE_COLOR, "black"
+        COMP_PADDLE_COLOR
     )
 
-
 def create_user_paddle(canvas):
-    """Create and return the player's paddle (bottom, blue)."""
     left_x = (CANVAS_WIDTH / 2) - (PADDLE_LENGTH / 2)
     top_y = CANVAS_HEIGHT - PADDLE_EDGE_DIST - PADDLE_THICKNESS
     return canvas.create_rectangle(
         left_x, top_y,
         left_x + PADDLE_LENGTH, top_y + PADDLE_THICKNESS,
-        USER_PADDLE_COLOR, "black"
+        USER_PADDLE_COLOR
     )
-
 
 def create_ball(canvas):
     start_x = CANVAS_WIDTH / 2 - BALL_RADIUS
@@ -251,7 +256,7 @@ def create_ball(canvas):
     ball = canvas.create_oval(
         start_x, start_y,
         start_x + BALL_DIAMETER, start_y + BALL_DIAMETER,
-        "#FFA500", "black"
+        "#FFA500"
     )
     dy = INITIAL_BALL_SPEED * (1 if random.random() >= 0.5 else -1)
     dx = random.uniform(INITIAL_BALL_SPEED * 0.3, INITIAL_BALL_SPEED * 0.8)
@@ -270,6 +275,8 @@ def reset_ball(canvas, ball, serve_dy_sign):
     dx *= (1 if random.random() >= 0.5 else -1)
     return dx, dy
 
+
+
 # Game setup
 
 def setup_game(canvas, bg_color):
@@ -284,11 +291,11 @@ def setup_game(canvas, bg_color):
     # Score display
     comp_score_text = canvas.create_text(
         CANVAS_WIDTH - 30, CANVAS_HEIGHT / 2 - 24,
-        "0", FONT, 24, COMP_PADDLE_COLOR
+        "0", "center", (FONT, 24), COMP_PADDLE_COLOR
     )
     user_score_text = canvas.create_text(
         CANVAS_WIDTH - 30, CANVAS_HEIGHT / 2 + 3,
-        "0", FONT, 24, USER_PADDLE_COLOR
+        "0", "center", (FONT, 24), USER_PADDLE_COLOR
     )
 
     comp_paddle = create_comp_paddle(canvas)
@@ -296,29 +303,29 @@ def setup_game(canvas, bg_color):
     ball, ball_dx, ball_dy = create_ball(canvas)
 
     return {
-        "user_score": 0,
-        "comp_score": 0,
+        "user_score":      0,
+        "comp_score":      0,
         "comp_score_text": comp_score_text,
         "user_score_text": user_score_text,
-        "comp_paddle": comp_paddle,
-        "user_paddle": user_paddle,
-        "ball": ball,
-        "ball_dx": ball_dx,
-        "ball_dy": ball_dy,
+        "comp_paddle":     comp_paddle,
+        "user_paddle":     user_paddle,
+        "ball":            ball,
+        "ball_dx":         ball_dx,
+        "ball_dy":         ball_dy,
     }
 
 # Per-frame update functions
 
 def move_user_paddle(canvas, paddle, keys):
-    """Slide the player's paddle left/right based on arrow-key input."""
     if not paddle:
         return
     current_x = canvas.get_left_x(paddle)
     for key in keys:
-        if key == "ArrowLeft":
+        k = _keysym(key)
+        if k == "Left":
             dx = max(-PADDLE_SPEED, -current_x)
             canvas.move(paddle, dx, 0)
-        elif key == "ArrowRight":
+        elif k == "Right":
             dx = min(PADDLE_SPEED, CANVAS_WIDTH - (current_x + PADDLE_LENGTH))
             canvas.move(paddle, dx, 0)
 
@@ -326,12 +333,11 @@ def move_user_paddle(canvas, paddle, keys):
 def move_comp_paddle(canvas, paddle, ball, ball_dy, comp_speed):
     if not paddle or not ball:
         return
-    # Only track the ball when it is heading toward the computer's side
     if ball_dy > 0:
         return
 
     paddle_center_x = canvas.get_left_x(paddle) + PADDLE_LENGTH / 2
-    ball_center_x = canvas.get_left_x(ball) + BALL_RADIUS
+    ball_center_x   = canvas.get_left_x(ball) + BALL_RADIUS
 
     diff = ball_center_x - paddle_center_x
     if abs(diff) <= 1:
@@ -351,12 +357,10 @@ def move_comp_paddle(canvas, paddle, ball, ball_dy, comp_speed):
 
 
 def _deflect_dx(current_dx, ball_center_x, paddle_left_x):
-    """Return a new dx after a paddle collision, factoring in impact offset."""
     impact_offset = (ball_center_x - (paddle_left_x + PADDLE_LENGTH / 2)) / (PADDLE_LENGTH / 2)
     new_dx = current_dx + impact_offset * (INITIAL_BALL_SPEED * 0.5)
     max_dx = INITIAL_BALL_SPEED * 1.5
     new_dx = max(-max_dx, min(max_dx, new_dx))
-    # Ensure a minimum horizontal component so the ball never travels vertically
     min_dx = INITIAL_BALL_SPEED * 0.2
     if abs(new_dx) < min_dx:
         new_dx = min_dx * (1 if new_dx >= 0 else -1)
@@ -366,9 +370,9 @@ def _deflect_dx(current_dx, ball_center_x, paddle_left_x):
 def update_ball(canvas, ball, dx, dy, comp_paddle, user_paddle):
     canvas.move(ball, dx, dy)
 
-    left_x = canvas.get_left_x(ball)
-    top_y = canvas.get_top_y(ball)
-    right_x = left_x + BALL_DIAMETER
+    left_x   = canvas.get_left_x(ball)
+    top_y    = canvas.get_top_y(ball)
+    right_x  = left_x + BALL_DIAMETER
     bottom_y = top_y + BALL_DIAMETER
     center_x = left_x + BALL_RADIUS
 
@@ -391,27 +395,29 @@ def update_ball(canvas, ball, dx, dy, comp_paddle, user_paddle):
     # Computer paddle collision
     if dy < 0 and top_y <= PADDLE_EDGE_DIST + PADDLE_THICKNESS + BALL_DIAMETER:
         if comp_paddle:
-            coords = canvas.coords(comp_paddle)
-            cp_left, cp_top, *_ = coords
-            cp_right = cp_left + PADDLE_LENGTH
+            coords    = canvas.coords(comp_paddle)
+            cp_left   = coords[0]
+            cp_top    = coords[1]
+            cp_right  = cp_left + PADDLE_LENGTH
             cp_bottom = cp_top + PADDLE_THICKNESS
 
             if right_x > cp_left and left_x < cp_right and bottom_y > cp_top and top_y < cp_bottom:
-                new_dy = min(abs(dy) + BALL_SPEED_INCREMENT, MAX_BALL_SPEED)
-                new_dx = _deflect_dx(new_dx, center_x, cp_left)
+                new_dy  = min(abs(dy) + BALL_SPEED_INCREMENT, MAX_BALL_SPEED)
+                new_dx  = _deflect_dx(new_dx, center_x, cp_left)
                 canvas.moveto(ball, left_x, cp_bottom + 0.1)
 
     # User paddle collision
     if dy > 0 and bottom_y >= CANVAS_HEIGHT - PADDLE_EDGE_DIST - PADDLE_THICKNESS - BALL_DIAMETER:
         if user_paddle:
-            coords = canvas.coords(user_paddle)
-            up_left, up_top, *_ = coords
-            up_right = up_left + PADDLE_LENGTH
+            coords    = canvas.coords(user_paddle)
+            up_left   = coords[0]
+            up_top    = coords[1]
+            up_right  = up_left + PADDLE_LENGTH
             up_bottom = up_top + PADDLE_THICKNESS
 
             if right_x > up_left and left_x < up_right and top_y < up_bottom and bottom_y > up_top:
-                new_dy = -min(abs(dy) + BALL_SPEED_INCREMENT, MAX_BALL_SPEED)
-                new_dx = _deflect_dx(new_dx, center_x, up_left)
+                new_dy  = -min(abs(dy) + BALL_SPEED_INCREMENT, MAX_BALL_SPEED)
+                new_dx  = _deflect_dx(new_dx, center_x, up_left)
                 canvas.moveto(ball, left_x, up_top - BALL_DIAMETER - 0.1)
 
     return new_dx, new_dy, STATE_PLAYING
@@ -421,15 +427,15 @@ def update_ball(canvas, ball, dx, dy, comp_paddle, user_paddle):
 def main():
     canvas = Canvas(CANVAS_WIDTH, CANVAS_HEIGHT)
 
-    game_state = STATE_TITLE
-    game_data = {}
+    game_state     = STATE_TITLE
+    game_data      = {}
     game_over_objs = []
-    flash_objs = []
-    bg_color = "#A7C7E7"
-    comp_speed = DIFFICULTY_SETTINGS["2"]["comp_speed"]
+    flash_objs     = []
+    bg_color       = "#A7C7E7"      # safe default; overwritten at colour choice
+    comp_speed     = DIFFICULTY_SETTINGS["2"]["comp_speed"]   # default: Medium
 
     while True:
-        key_press = canvas.get_new_key_presses()
+        key_presses = canvas.get_new_key_presses()
 
         if game_state == STATE_TITLE:
             if not show_titlecard(canvas):
@@ -439,20 +445,22 @@ def main():
             game_state = STATE_COLOR_CHOICE
 
         elif game_state == STATE_COLOR_CHOICE:
-            bg_color = choose_bg_color(canvas)
+            bg_color   = choose_bg_color(canvas)
             game_state = STATE_DIFFICULTY
 
         elif game_state == STATE_DIFFICULTY:
             comp_speed = choose_difficulty(canvas)
-            game_data = setup_game(canvas, bg_color)
+            game_data  = setup_game(canvas, bg_color)
             game_state = STATE_PLAYING
 
         elif game_state == STATE_PLAYING:
-            move_user_paddle(canvas, game_data["user_paddle"], key_press)
+            move_user_paddle(canvas, game_data["user_paddle"], key_presses)
             move_comp_paddle(
-                canvas, game_data["comp_paddle"],
-                game_data["ball"], game_data["ball_dy"],
-                comp_speed
+                canvas,
+                game_data["comp_paddle"],
+                game_data["ball"],
+                game_data["ball_dy"],
+                comp_speed,
             )
 
             new_dx, new_dy, round_state = update_ball(
@@ -468,18 +476,19 @@ def main():
 
             if round_state == STATE_USER_SCORED:
                 game_data["user_score"] += 1
-                canvas.change_text(game_data["user_score_text"], str(game_data["user_score"]))
+                canvas.set_text(game_data["user_score_text"], str(game_data["user_score"]))
                 flash_objs.append(canvas.create_text(
                     CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 14,
-                    "You Scored!", FONT, 24, USER_PADDLE_COLOR, anchor="center"
+                    "You Scored!", "center", (FONT, 24), USER_PADDLE_COLOR
                 ))
                 if game_data["user_score"] >= WINNING_SCORE:
-                    game_state = STATE_GAME_OVER
+                    game_state     = STATE_GAME_OVER
                     game_over_objs = show_gameover(
-                        canvas, "You Win! 🎉",
+                        canvas, "You Win! :)",
                         game_data["user_score"], game_data["comp_score"]
                     )
                 else:
+                    canvas.update()
                     time.sleep(1)
                     for obj in flash_objs:
                         canvas.delete(obj)
@@ -490,18 +499,19 @@ def main():
 
             elif round_state == STATE_COMP_SCORED:
                 game_data["comp_score"] += 1
-                canvas.change_text(game_data["comp_score_text"], str(game_data["comp_score"]))
+                canvas.set_text(game_data["comp_score_text"], str(game_data["comp_score"]))
                 flash_objs.append(canvas.create_text(
                     CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 14,
-                    "Computer Scored!", FONT, 24, COMP_PADDLE_COLOR, anchor="center"
+                    "Computer Scored!", "center", (FONT, 24), COMP_PADDLE_COLOR
                 ))
                 if game_data["comp_score"] >= WINNING_SCORE:
-                    game_state = STATE_GAME_OVER
+                    game_state     = STATE_GAME_OVER
                     game_over_objs = show_gameover(
-                        canvas, "You Lose! ☹️",
+                        canvas, "You Lose! :(",
                         game_data["user_score"], game_data["comp_score"]
                     )
                 else:
+                    canvas.update()
                     time.sleep(1)
                     for obj in flash_objs:
                         canvas.delete(obj)
@@ -509,20 +519,21 @@ def main():
                     game_data["ball_dx"], game_data["ball_dy"] = reset_ball(
                         canvas, game_data["ball"], -1
                     )
-
         elif game_state == STATE_GAME_OVER:
-            for key in key_press:
-                if key == "Escape":
+            for key in key_presses:
+                k = _keysym(key)
+                if k == "Escape":
                     print("Exiting...")
                     return
-                elif key == "Enter":
+                elif k == "Return":
                     for obj in game_over_objs:
                         canvas.delete(obj)
                     game_over_objs = []
-                    game_data = setup_game(canvas, bg_color)
-                    game_state = STATE_PLAYING
+                    game_data      = setup_game(canvas, bg_color)
+                    game_state     = STATE_PLAYING
                     break
 
+        canvas.update()
         time.sleep(FRAME_DELAY)
 
 
