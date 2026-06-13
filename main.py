@@ -2,15 +2,13 @@ from graphics import Canvas
 import random
 import time
 
-# ---------------------------------------------------------------------------
 # Canvas dimensions
-# ---------------------------------------------------------------------------
+
 CANVAS_WIDTH = 350
 CANVAS_HEIGHT = 400
 
-# ---------------------------------------------------------------------------
 # Paddle settings
-# ---------------------------------------------------------------------------
+
 PADDLE_LENGTH = 80
 PADDLE_THICKNESS = 10
 PADDLE_EDGE_DIST = 20
@@ -24,31 +22,27 @@ DIFFICULTY_SETTINGS = {
     "3": {"name": "Hard",   "comp_speed": 5.0},
 }
 
-# ---------------------------------------------------------------------------
 # Ball settings
-# ---------------------------------------------------------------------------
+
 BALL_DIAMETER = 10
 BALL_RADIUS = BALL_DIAMETER / 2
 INITIAL_BALL_SPEED = 4
-BALL_SPEED_INCREMENT = 0.2   # added to |dy| on each paddle hit
+BALL_SPEED_INCREMENT = 0.2
 MAX_BALL_SPEED = 8
 
-# ---------------------------------------------------------------------------
 # Scoring
-# ---------------------------------------------------------------------------
+
 WINNING_SCORE = 5
 
-# ---------------------------------------------------------------------------
-# Typography / UI
-# ---------------------------------------------------------------------------
+# Typography
+
 GAME_TITLE = "Tennis Showdown"
 TITLE_FONT = "Magneto"
 FONT = "Arial Black"
 FRAME_DELAY = 1 / 60
 
-# ---------------------------------------------------------------------------
 # Game-state constants
-# ---------------------------------------------------------------------------
+
 STATE_TITLE = "TITLE"
 STATE_COLOR_CHOICE = "COLOR_CHOICE"
 STATE_DIFFICULTY = "DIFFICULTY"
@@ -60,16 +54,9 @@ STATE_COMP_SCORED = "COMP_SCORED"
 
 GAME_OVER_TEXT_COLOR = "#111111"
 
-
-# ===========================================================================
 # Screen helpers
-# ===========================================================================
 
 def show_titlecard(canvas):
-    """Render the title screen and block until Enter (start) or Escape (quit).
-
-    Returns True if the player wants to start, False if they want to quit.
-    """
     objs = []
     objs.append(canvas.create_rectangle(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT, "#C0FFEE"))
     objs.append(canvas.create_text(
@@ -81,7 +68,7 @@ def show_titlecard(canvas):
         "Press Enter to start", "Lucida Console", 20, "#2E2E2E", anchor="center"
     ))
 
-    # Tennis icon (aspect-ratio preserving)
+    # Tennis icon
     icon_h = CANVAS_HEIGHT / 2
     icon_w = int(icon_h * (456 / 547))
     icon_top_y = CANVAS_HEIGHT / 2
@@ -108,7 +95,6 @@ def show_titlecard(canvas):
 
 
 def choose_bg_color(canvas):
-    """Render the background-color picker and return the chosen hex color."""
     color_options = {
         "1": {"name": "Blue",  "value": "#A7C7E7"},
         "2": {"name": "Green", "value": "#77DD77"},
@@ -155,7 +141,6 @@ def choose_bg_color(canvas):
 
 
 def choose_difficulty(canvas):
-    """Render the difficulty picker and return the computer's paddle speed."""
     objs = []
     objs.append(canvas.create_rectangle(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT, "black"))
 
@@ -196,10 +181,7 @@ def choose_difficulty(canvas):
 
 
 def show_gameover(canvas, winner_text, user_score, comp_score):
-    """Render the game-over screen showing the winner and final score.
 
-    Returns a list of canvas objects so the caller can clean them up.
-    """
     canvas.clear()
     objs = []
 
@@ -239,10 +221,7 @@ def show_gameover(canvas, winner_text, user_score, comp_score):
 
     return objs
 
-
-# ===========================================================================
 # Game-object creators
-# ===========================================================================
 
 def create_comp_paddle(canvas):
     """Create and return the computer's paddle (top, red)."""
@@ -267,10 +246,6 @@ def create_user_paddle(canvas):
 
 
 def create_ball(canvas):
-    """Spawn the ball at the centre with a randomised direction.
-
-    Returns (ball_obj, dx, dy).
-    """
     start_x = CANVAS_WIDTH / 2 - BALL_RADIUS
     start_y = CANVAS_HEIGHT / 2 - BALL_RADIUS
     ball = canvas.create_oval(
@@ -285,10 +260,6 @@ def create_ball(canvas):
 
 
 def reset_ball(canvas, ball, serve_dy_sign):
-    """Move the ball back to centre and return a fresh (dx, dy).
-
-    serve_dy_sign: +1 to send the ball toward the user, -1 toward the computer.
-    """
     canvas.moveto(
         ball,
         CANVAS_WIDTH / 2 - BALL_RADIUS,
@@ -299,13 +270,9 @@ def reset_ball(canvas, ball, serve_dy_sign):
     dx *= (1 if random.random() >= 0.5 else -1)
     return dx, dy
 
-
-# ===========================================================================
 # Game setup
-# ===========================================================================
 
 def setup_game(canvas, bg_color):
-    """Clear the canvas and build a fresh game.  Returns a game-state dict."""
     canvas.clear()
 
     # Background
@@ -340,10 +307,7 @@ def setup_game(canvas, bg_color):
         "ball_dy": ball_dy,
     }
 
-
-# ===========================================================================
 # Per-frame update functions
-# ===========================================================================
 
 def move_user_paddle(canvas, paddle, keys):
     """Slide the player's paddle left/right based on arrow-key input."""
@@ -360,7 +324,6 @@ def move_user_paddle(canvas, paddle, keys):
 
 
 def move_comp_paddle(canvas, paddle, ball, ball_dy, comp_speed):
-    """Move the AI paddle toward the ball, but only when the ball approaches."""
     if not paddle or not ball:
         return
     # Only track the ball when it is heading toward the computer's side
@@ -401,11 +364,6 @@ def _deflect_dx(current_dx, ball_center_x, paddle_left_x):
 
 
 def update_ball(canvas, ball, dx, dy, comp_paddle, user_paddle):
-    """Move the ball and handle all collision / scoring logic.
-
-    Returns (new_dx, new_dy, game_state_string).
-    game_state_string is one of: STATE_PLAYING, STATE_USER_SCORED, STATE_COMP_SCORED.
-    """
     canvas.move(ball, dx, dy)
 
     left_x = canvas.get_left_x(ball)
@@ -414,7 +372,7 @@ def update_ball(canvas, ball, dx, dy, comp_paddle, user_paddle):
     bottom_y = top_y + BALL_DIAMETER
     center_x = left_x + BALL_RADIUS
 
-    # --- Scoring ---
+    # Scoring
     if top_y < 0:
         return dx, dy, STATE_USER_SCORED
     if bottom_y > CANVAS_HEIGHT:
@@ -422,7 +380,7 @@ def update_ball(canvas, ball, dx, dy, comp_paddle, user_paddle):
 
     new_dx, new_dy = dx, dy
 
-    # --- Side-wall bouncing ---
+    # Side-wall bouncing
     if left_x <= 0:
         new_dx = abs(dx)
         canvas.moveto(ball, 0.1, top_y)
@@ -430,7 +388,7 @@ def update_ball(canvas, ball, dx, dy, comp_paddle, user_paddle):
         new_dx = -abs(dx)
         canvas.moveto(ball, CANVAS_WIDTH - BALL_DIAMETER - 0.1, top_y)
 
-    # --- Computer paddle collision ---
+    # Computer paddle collision
     if dy < 0 and top_y <= PADDLE_EDGE_DIST + PADDLE_THICKNESS + BALL_DIAMETER:
         if comp_paddle:
             coords = canvas.coords(comp_paddle)
@@ -443,7 +401,7 @@ def update_ball(canvas, ball, dx, dy, comp_paddle, user_paddle):
                 new_dx = _deflect_dx(new_dx, center_x, cp_left)
                 canvas.moveto(ball, left_x, cp_bottom + 0.1)
 
-    # --- User paddle collision ---
+    # User paddle collision
     if dy > 0 and bottom_y >= CANVAS_HEIGHT - PADDLE_EDGE_DIST - PADDLE_THICKNESS - BALL_DIAMETER:
         if user_paddle:
             coords = canvas.coords(user_paddle)
@@ -458,10 +416,7 @@ def update_ball(canvas, ball, dx, dy, comp_paddle, user_paddle):
 
     return new_dx, new_dy, STATE_PLAYING
 
-
-# ===========================================================================
 # Main game loop
-# ===========================================================================
 
 def main():
     canvas = Canvas(CANVAS_WIDTH, CANVAS_HEIGHT)
@@ -470,13 +425,12 @@ def main():
     game_data = {}
     game_over_objs = []
     flash_objs = []
-    bg_color = "#A7C7E7"       # safe default; overwritten during colour choice
-    comp_speed = DIFFICULTY_SETTINGS["2"]["comp_speed"]   # default: Medium
+    bg_color = "#A7C7E7"
+    comp_speed = DIFFICULTY_SETTINGS["2"]["comp_speed"]
 
     while True:
         key_press = canvas.get_new_key_presses()
 
-        # ------------------------------------------------------------------ #
         if game_state == STATE_TITLE:
             if not show_titlecard(canvas):
                 print("Exiting...")
@@ -484,18 +438,15 @@ def main():
             canvas.clear()
             game_state = STATE_COLOR_CHOICE
 
-        # ------------------------------------------------------------------ #
         elif game_state == STATE_COLOR_CHOICE:
             bg_color = choose_bg_color(canvas)
             game_state = STATE_DIFFICULTY
 
-        # ------------------------------------------------------------------ #
         elif game_state == STATE_DIFFICULTY:
             comp_speed = choose_difficulty(canvas)
             game_data = setup_game(canvas, bg_color)
             game_state = STATE_PLAYING
 
-        # ------------------------------------------------------------------ #
         elif game_state == STATE_PLAYING:
             move_user_paddle(canvas, game_data["user_paddle"], key_press)
             move_comp_paddle(
@@ -559,7 +510,6 @@ def main():
                         canvas, game_data["ball"], -1
                     )
 
-        # ------------------------------------------------------------------ #
         elif game_state == STATE_GAME_OVER:
             for key in key_press:
                 if key == "Escape":
